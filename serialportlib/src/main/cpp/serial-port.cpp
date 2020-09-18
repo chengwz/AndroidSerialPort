@@ -118,6 +118,7 @@ Java_com_deemons_serialportlib_SerialPort_open
     {
         struct termios cfg;
         LOGD("Configuring serial port");
+
         if (tcgetattr(fd, &cfg))
         {
             LOGE("tcgetattr() failed");
@@ -132,26 +133,48 @@ Java_com_deemons_serialportlib_SerialPort_open
 
         /* More attribute set */
         switch (parity) {
-            case 0: break;
-            case 1: cfg.c_cflag |= PARENB; break;
-            case 2: cfg.c_cflag &= ~PARODD; break;
+            case 0:
+                cfg.c_cflag &= ~PARENB;
+                cfg.c_cflag &= ~INPCK;
+                break;
+            case 1:
+                cfg.c_cflag |= PARENB;
+                cfg.c_cflag |= PARODD;
+                cfg.c_cflag |= (INPCK|ISTRIP);
+                break;
+            case 2:
+                cfg.c_cflag |= PARENB;
+                cfg.c_cflag &= ~PARODD;
+                cfg.c_cflag |= (INPCK|ISTRIP);
+                break;
         }
         switch (dataBits) {
-            case 5: cfg.c_cflag |= CS5; break;
-            case 6: cfg.c_cflag |= CS6; break;
-            case 7: cfg.c_cflag |= CS7; break;
-            case 8: cfg.c_cflag |= CS8; break;
+            case 5:
+                cfg.c_cflag |= CS5;
+                break;
+            case 6:
+                cfg.c_cflag |= CS6;
+                break;
+            case 7:
+                cfg.c_cflag |= CS7;
+                break;
+            case 8:
+                cfg.c_cflag |= CS8;
+                break;
         }
         switch (stopBit) {
-            case 1: cfg.c_cflag &= ~CSTOPB; break;
-            case 2: cfg.c_cflag |= CSTOPB; break;
+            case 1:
+                cfg.c_cflag &= ~CSTOPB;
+                break;
+            case 2:
+                cfg.c_cflag |= CSTOPB;
+                break;
         }
 
         if (tcsetattr(fd, TCSANOW, &cfg))
         {
             LOGE("tcsetattr() failed");
             close(fd);
-            /* TODO: throw an exception */
             return NULL;
         }
     }
@@ -174,7 +197,9 @@ Java_com_deemons_serialportlib_SerialPort_open
  * Method:    close
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_deemons_serialportlib_SerialPort_close
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_deemons_serialportlib_SerialPort_close
         (JNIEnv *env, jobject thiz)
 {
     jclass SerialPortClass = env->GetObjectClass( thiz);
